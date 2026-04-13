@@ -19,21 +19,33 @@ jobs:
             artifact_name: TFADS_to_FCS-windows
             build_cmd: >-
               pyinstaller --noconfirm --clean --windowed --onefile --name TFADS_to_FCS
-              --collect-all PySide6
+              --paths src
+              --hidden-import tfads_to_fcs.gui
+              --hidden-import PySide6.QtCore
+              --hidden-import PySide6.QtGui
+              --hidden-import PySide6.QtWidgets
               --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png;."
               app.py
           - os: macos-latest
             artifact_name: TFADS_to_FCS-macos
             build_cmd: >-
               pyinstaller --noconfirm --clean --windowed --onefile --name TFADS_to_FCS
-              --collect-all PySide6
+              --paths src
+              --hidden-import tfads_to_fcs.gui
+              --hidden-import PySide6.QtCore
+              --hidden-import PySide6.QtGui
+              --hidden-import PySide6.QtWidgets
               --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png:."
               app.py
           - os: ubuntu-latest
             artifact_name: TFADS_to_FCS-linux
             build_cmd: >-
               pyinstaller --noconfirm --clean --windowed --onefile --name TFADS_to_FCS
-              --collect-all PySide6
+              --paths src
+              --hidden-import tfads_to_fcs.gui
+              --hidden-import PySide6.QtCore
+              --hidden-import PySide6.QtGui
+              --hidden-import PySide6.QtWidgets
               --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png:."
               app.py
 
