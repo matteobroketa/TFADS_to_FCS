@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tfads-to-fcs"
+version = "0.1.0"
+description = "Simple cross-platform TFADS .xls-to-FCS 3.0 converter with drag-and-drop UI."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "TFADS to FCS Converter" }
+]
+dependencies = [
+  "numpy>=2.1.0",
+  "PySide6>=6.8.0",
+]
+
+[project.scripts]
+tfads-to-fcs = "tfads_to_fcs.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tfads_to_fcs"]
+
+[tool.pyinstaller]
+entry = "src/tfads_to_fcs/__main__.py"
