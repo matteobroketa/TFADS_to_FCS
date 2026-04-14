@@ -24,7 +24,7 @@ jobs:
               --hidden-import PySide6.QtCore
               --hidden-import PySide6.QtGui
               --hidden-import PySide6.QtWidgets
-              --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png;."
+              --add-data "logo.png;."
               app.py
           - os: macos-latest
             artifact_name: TFADS_to_FCS-macos
@@ -35,7 +35,7 @@ jobs:
               --hidden-import PySide6.QtCore
               --hidden-import PySide6.QtGui
               --hidden-import PySide6.QtWidgets
-              --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png:."
+              --add-data "logo.png:."
               app.py
           - os: ubuntu-latest
             artifact_name: TFADS_to_FCS-linux
@@ -46,7 +46,7 @@ jobs:
               --hidden-import PySide6.QtCore
               --hidden-import PySide6.QtGui
               --hidden-import PySide6.QtWidgets
-              --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png:."
+              --add-data "logo.png:."
               app.py
 
     runs-on: ${{ matrix.os }}

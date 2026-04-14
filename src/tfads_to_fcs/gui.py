@@ -24,7 +24,7 @@ from .converter import ConversionError, convert_to_fcs
 
 
 def _find_logo() -> Path | None:
-    explicit = "Gemini_Generated_Image_72a67r72a67r72a6.png"
+    explicit = "logo.png"
     candidates = [
         Path(__file__).resolve().parents[2] / explicit,
         Path.cwd() / explicit,
