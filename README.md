@@ -57,13 +57,13 @@ Build one-file executable:
 - Windows:
 
 ```powershell
-pyinstaller --noconfirm --clean --windowed --onefile --name TFADS_to_FCS --paths src --hidden-import tfads_to_fcs.gui --hidden-import PySide6.QtCore --hidden-import PySide6.QtGui --hidden-import PySide6.QtWidgets --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png;." app.py
+pyinstaller --noconfirm --clean --windowed --onefile --name TFADS_to_FCS --paths src --hidden-import tfads_to_fcs.gui --hidden-import PySide6.QtCore --hidden-import PySide6.QtGui --hidden-import PySide6.QtWidgets --add-data "logo.png;." app.py
 ```
 
 - macOS/Linux:
 
 ```bash
-pyinstaller --noconfirm --clean --windowed --onefile --name TFADS_to_FCS --paths src --hidden-import tfads_to_fcs.gui --hidden-import PySide6.QtCore --hidden-import PySide6.QtGui --hidden-import PySide6.QtWidgets --add-data "Gemini_Generated_Image_72a67r72a67r72a6.png:." app.py
+pyinstaller --noconfirm --clean --windowed --onefile --name TFADS_to_FCS --paths src --hidden-import tfads_to_fcs.gui --hidden-import PySide6.QtCore --hidden-import PySide6.QtGui --hidden-import PySide6.QtWidgets --add-data "logo.png:." app.py
 ```
 
 The executable appears in `dist/`.
