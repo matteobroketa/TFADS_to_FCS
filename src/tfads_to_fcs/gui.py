@@ -106,7 +106,7 @@ class DropZone(QFrame):
 class ConvertWorker(QObject):
     status = Signal(str)
     progress_update = Signal(int, int)  # current, total
-    done = Signal(list)  # list of output paths
+    done = Signal(list, list)  # list of output paths, list of errors
     failed = Signal(str)
 
     def __init__(self, input_paths: list[Path]) -> None:
@@ -115,6 +115,7 @@ class ConvertWorker(QObject):
 
     def run(self) -> None:
         output_paths = []
+        errors = []
         total = len(self.input_paths)
         try:
             for idx, input_path in enumerate(self.input_paths, 1):
@@ -123,9 +124,12 @@ class ConvertWorker(QObject):
                     self.status.emit(f"Converting: {input_path.name}")
                 else:
                     self.status.emit(f"Converting {idx}/{total}: {input_path.name}")
-                output = convert_to_fcs(input_path)
-                output_paths.append(str(output))
-            self.done.emit(output_paths)
+                try:
+                    output = convert_to_fcs(input_path)
+                    output_paths.append(str(output))
+                except ConversionError as exc:
+                    errors.append(f"{input_path.name}: {exc}")
+            self.done.emit(output_paths, errors)
         except ConversionError as exc:
             self.failed.emit(str(exc))
         except Exception as exc:  # noqa: BLE001
@@ -334,17 +338,45 @@ class MainWindow(QMainWindow):
 
         self.worker_thread.start()
 
-    def _on_success(self, output_paths: list[str]) -> None:
-        if len(output_paths) == 1:
+    def _on_success(self, output_paths: list[str], errors: list[str]) -> None:
+        if output_paths and not errors and len(output_paths) == 1:
             self.status_label.setText(f"Conversion completed: {output_paths[0]}")
             QMessageBox.information(self, "Success", f"FCS file created:\n{output_paths[0]}")
-        else:
+            return
+
+        if output_paths and not errors:
             self.status_label.setText(f"{len(output_paths)} conversions completed.")
             QMessageBox.information(
                 self,
                 "Success",
                 f"{len(output_paths)} FCS files created:\n" + "\n".join(output_paths),
             )
+            return
+
+        if output_paths and errors:
+            self.status_label.setText(
+                f"{len(output_paths)} converted, {len(errors)} failed."
+            )
+            QMessageBox.warning(
+                self,
+                "Batch conversion completed with errors",
+                (
+                    f"Converted ({len(output_paths)}):\n"
+                    + "\n".join(output_paths)
+                    + "\n\nFailed ("
+                    + str(len(errors))
+                    + "):\n"
+                    + "\n".join(errors)
+                ),
+            )
+            return
+
+        self.status_label.setText("No files were converted.")
+        QMessageBox.critical(
+            self,
+            "Conversion failed",
+            "No files were converted.\n\n" + "\n".join(errors),
+        )
 
     def _on_failure(self, message: str) -> None:
         self.status_label.setText("Conversion failed.")

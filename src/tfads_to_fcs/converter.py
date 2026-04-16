@@ -13,6 +13,7 @@ ProgressCallback = Callable[[str], None]
 _OLE2_MAGIC = b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"
 _ZIP_MAGIC = b"PK\x03\x04"
 _DELIMITERS = ("\t", ",", ";", "|")
+_SUPPORTED_SUFFIXES = {".xls", ".csv", ".tsv", ".txt"}
 _TEXT_START = 58
 _OFFSET_WIDTH = 12
 
@@ -68,6 +69,12 @@ def _emit(progress: ProgressCallback | None, message: str) -> None:
 
 
 def _assert_supported_input(path: Path) -> None:
+    if path.suffix.lower() not in _SUPPORTED_SUFFIXES:
+        supported = ", ".join(sorted(_SUPPORTED_SUFFIXES))
+        raise ConversionError(
+            f"Unsupported input extension '{path.suffix}'. Supported: {supported}."
+        )
+
     with path.open("rb") as handle:
         head = handle.read(8)
     if head.startswith(_OLE2_MAGIC) or head.startswith(_ZIP_MAGIC):
@@ -75,6 +82,37 @@ def _assert_supported_input(path: Path) -> None:
             "Binary Excel workbooks are not supported by this build. "
             "Use TFADS text export (.xls tab-delimited) or CSV/TSV."
         )
+
+
+def _parse_numeric_row(
+    stripped_line: str,
+    expected_cols: int,
+    delimiter: str,
+    row_index: int,
+) -> np.ndarray:
+    parts = stripped_line.split(delimiter)
+    if len(parts) > expected_cols:
+        raise ConversionError(
+            f"Line {row_index}: expected {expected_cols} numeric values, got {len(parts)}."
+        )
+
+    first_empty = next((idx for idx, token in enumerate(parts) if token == ""), None)
+    if first_empty is not None:
+        if any(token != "" for token in parts[first_empty:]):
+            raise ConversionError(f"Line {row_index}: found empty value in the middle of a row.")
+        parts[first_empty:] = ["0"] * (len(parts) - first_empty)
+
+    if len(parts) < expected_cols:
+        parts.extend(["0"] * (expected_cols - len(parts)))
+
+    try:
+        values = np.array([float(token) for token in parts], dtype=np.float64)
+    except ValueError as exc:
+        raise ConversionError(f"Line {row_index}: found non-numeric value.") from exc
+
+    if not np.all(np.isfinite(values)):
+        raise ConversionError(f"Line {row_index}: found NaN or infinite value.")
+    return values
 
 
 def _scan_text_table(path: Path) -> ScanResult:
@@ -97,13 +135,7 @@ def _scan_text_table(path: Path) -> ScanResult:
             if not stripped:
                 continue
 
-            values = np.fromstring(stripped, sep=delimiter, dtype=np.float64)
-            if values.size != len(columns):
-                raise ConversionError(
-                    f"Line {row_index}: expected {len(columns)} numeric values, got {values.size}."
-                )
-            if not np.all(np.isfinite(values)):
-                raise ConversionError(f"Line {row_index}: found NaN or infinite value.")
+            values = _parse_numeric_row(stripped, len(columns), delimiter, row_index)
 
             mins = np.minimum(mins, values)
             maxs = np.maximum(maxs, values)
@@ -138,14 +170,7 @@ def _iter_numeric_rows(path: Path, expected_cols: int, delimiter: str):
             stripped = line.strip()
             if not stripped:
                 continue
-            values = np.fromstring(stripped, sep=delimiter, dtype=np.float64)
-            if values.size != expected_cols:
-                raise ConversionError(
-                    f"Line {row_index}: expected {expected_cols} numeric values, got {values.size}."
-                )
-            if not np.all(np.isfinite(values)):
-                raise ConversionError(f"Line {row_index}: found NaN or infinite value.")
-            yield values
+            yield _parse_numeric_row(stripped, expected_cols, delimiter, row_index)
 
 
 def _sanitize_value(value: str, delimiter: str) -> str:
